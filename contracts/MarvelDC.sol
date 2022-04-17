@@ -31,7 +31,8 @@ contract MarvelDC{
     uint256 _relayerFee;
     uint256 _finaliseBounty;
     uint256 constant _phaseLength = 100;
-    
+    // repMultiplier needed to provide block producers with an increase in reputation
+    uint256 connstant _repMultiplier=10000;
     
     constructor() {
     	//do we need to set randomness?
@@ -70,7 +71,7 @@ contract MarvelDC{
         );
         require((_reputations[msg.sender]==0), "Registration ID already taken");
 
-        _reputations[msg.sender] = initialReputation;
+        _reputations[msg.sender] = initialReputation*_repMultiplier;
         computers.push(msg.sender);
 
         
@@ -153,7 +154,10 @@ contract MarvelDC{
             "Only one submission allowed per computer"
         );
         _computations[_computationId]._responses[msg.sender]=_response;
-
+	
+	// give the block producer an increase in reputation. See Reputation Mechanism section of paper for further details.
+	
+	_reputations[address(block.coinbase)]+= uint256(_repMultiplier*_computations[_computationId]._numToReward/_computations[_computationId]._numToSelect);
         return true;
     }
     
@@ -188,10 +192,17 @@ contract MarvelDC{
         	require(rewardSetCheck_targetFunction1(_computationId, _respondingComputers, _decryptedResults),"reward set is incorrect");
         }
         // distribute rewards and update reputations
+	
+	
         for (uint256 j = 0; j < _computations[_computationId]._numToReward; j++) {
             payable(_respondingComputers[j]).transfer(_computations[_computationId]._rewardAmount);
-            _reputations[_respondingComputers[j]]+=1;		
+            _reputations[_respondingComputers[j]]+=(1*_repMultiplier);		
         }
+	
+	// update the reputation of the block producer in line with reputation mechanism of the paper
+	_reputations[address(block.coinbase)]+= (_repMultiplier*_computations[_computationId]._numToReward);
+	
+	
         //return escrow to requester
         payable(msg.sender).transfer(_computations[_computationId]._rewardAmount * uint256( _computations[_computationId]._numToReward));
         _computations[_computationId]._active=false;
