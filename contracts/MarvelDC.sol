@@ -32,7 +32,7 @@ contract MarvelDC{
     uint256 _finaliseBounty;
     uint256 constant _phaseLength = 100;
     // repMultiplier needed to provide block producers with an increase in reputation
-    uint256 connstant _repMultiplier=10000;
+    uint256 constant _repMultiplier=10000;
     
     constructor() {
     	//do we need to set randomness?
